@@ -739,6 +739,25 @@ resource uistgacc_mi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-3
   tags: resourceTags
 }
 
+resource uistgacc_roledefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  scope: subscription()
+  // This is the Storage Account Contributor role, which is the minimum role permission we can give. 
+  // See https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#:~:text=17d1049b-9a84-46fb-8f53-869881c3d3ab
+  name: '17d1049b-9a84-46fb-8f53-869881c3d3ab'
+}
+
+// This requires the service principal to be in 'owner' role or a custom role with 'Microsoft.Authorization/roleAssignments/write' permissions.
+// Details: https://learn.microsoft.com/en-us/answers/questions/287573/authorization-failed-when-when-writing-a-roleassig.html
+resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  scope: uistgacc
+  name: guid(resourceGroup().id, uistgacc_mi.id, uistgacc_roledefinition.id)
+  properties: {
+    roleDefinitionId: uistgacc_roledefinition.id
+    principalId: uistgacc_mi.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: 'DeploymentScript'
   location: resourceLocation
@@ -749,6 +768,10 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
       '${uistgacc_mi.id}': {}
     }
   }
+  dependsOn: [
+    // we need to ensure we wait for the role assignment to be deployed before trying to access the storage account
+    roleAssignment
+  ]
   properties: {
     azPowerShellVersion: '3.0'
     scriptContent: loadTextContent('./scripts/enable-static-website.ps1')
@@ -792,7 +815,7 @@ resource ui2stgacc_roledefinition_renamed 'Microsoft.Authorization/roleDefinitio
   scope: subscription()
   // This is the Storage Account Contributor role, which is the minimum role permission we can give. 
   // See https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#:~:text=17d1049b-9a84-46fb-8f53-869881c3d3ab
-  name: '17d1049b-9a84-46fb-8f53-869881c3d3ab'
+  name: '17d1049b-9a84-46fb-8f53-869881c3d3ab1'
 }
 
 // This requires the service principal to be in 'owner' role or a custom role with 'Microsoft.Authorization/roleAssignments/write' permissions.
@@ -817,6 +840,10 @@ resource deploymentScript2 'Microsoft.Resources/deploymentScripts@2020-10-01' = 
       '${ui2stgacc_mi.id}': {}
     }
   }
+  dependsOn: [
+    // we need to ensure we wait for the role assignment to be deployed before trying to access the storage account
+    roleAssignment
+  ]
   properties: {
     azPowerShellVersion: '3.0'
     scriptContent: loadTextContent('./scripts/enable-static-website.ps1')
