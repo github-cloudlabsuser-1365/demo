@@ -817,10 +817,6 @@ resource deploymentScript2 'Microsoft.Resources/deploymentScripts@2020-10-01' = 
       '${ui2stgacc_mi.id}': {}
     }
   }
-  dependsOn: [
-    // we need to ensure we wait for the role assignment to be deployed before trying to access the storage account
-    roleAssignment
-  ]
   properties: {
     azPowerShellVersion: '3.0'
     scriptContent: loadTextContent('./scripts/enable-static-website.ps1')
