@@ -816,9 +816,9 @@ resource ui2stgacc_mi 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-
 // Details: https://learn.microsoft.com/en-us/answers/questions/287573/authorization-failed-when-when-writing-a-roleassig.html
 resource roleAssignment2 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: ui2stgacc
-  name: guid(resourceGroup().id, ui2stgacc_mi.id, uistgacc_roledefinition_renamed.id)
+  name: guid(resourceGroup().id, ui2stgacc_mi.id, uistgacc_roledefinition.id)
   properties: {
-    roleDefinitionId: uistgacc_roledefinition_renamed.id
+    roleDefinitionId: uistgacc_roledefinition.id
     principalId: ui2stgacc_mi.properties.principalId
     principalType: 'ServicePrincipal'
   }
@@ -836,7 +836,7 @@ resource deploymentScript2 'Microsoft.Resources/deploymentScripts@2020-10-01' = 
   }
   dependsOn: [
     // we need to ensure we wait for the role assignment to be deployed before trying to access the storage account
-    roleAssignment
+    roleAssignment2
   ]
   properties: {
     azPowerShellVersion: '3.0'
